@@ -58,7 +58,8 @@ app.get('/api/getEvents', async (req, res)=>{
         res.send({"events": finalEvents});
         } else {
             const event = await Event.findOne({url: req.query.url}).lean();
-            res.send(event);
+            const available = await tokenContract.methods.balanceOf(process.env.MARKETPLACE_ADDRESS, event.tokenId).call()
+            res.send({...event, available: available});
         }
         
     } catch {
