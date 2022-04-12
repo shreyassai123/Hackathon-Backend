@@ -72,7 +72,8 @@ app.post('/api/addEvent', async (req, res)=>{
     try {
         await Event.insertMany([req.body]);
         res.send({status: "ok"});
-    } catch {
+    } catch(e) {
+        console.log(e)
         res.status(400);
         res.send({status: "error"});
     }

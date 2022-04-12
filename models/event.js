@@ -11,18 +11,19 @@ const marketplaceContract = new web3.eth.Contract(marketplaceAbi, process.env.MA
 const tokenContract = new web3.eth.Contract(tokenAbi, process.env.TOKEN_ADDRESS);
 const EventSchema = new mongoose.Schema(
   {
+    item: {
+        type: Number,
+        required: true,
+        unique: true,
+        validate: [checkItem, "Enter a valid item ID"],
+      },
     title: { type: String, required: true, trim: true },
     subtitle: { type: String, required: true, trim: true },
     description: { type: String, required: true },
     avatarSrc: { type: String, required: true },
     coverSrc: { type: String, required: true },
     url: { type: String, required: true, unique: true },
-    item: {
-      type: Number,
-      required: true,
-      unique: true,
-      validate: [checkItem, "Enter a valid item ID"],
-    },
+    
     metadata: { type: Object, required: true },
     totalSupply: { type: Number, required: true },
     price: { type: String, required: true },
@@ -45,6 +46,10 @@ async function checkItem(val) {
             this.totalSupply = totalSupply;
             this.price = item.price;
             this.tokenId = item.tokenId;
+            this.avatarSrc = metadata.image;
+            this.coverSrc = metadata.image;
+            this.description = metadata.description;
+            this.title = metadata.name;
         }
         } else {
             return false
