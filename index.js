@@ -4,7 +4,17 @@ const Event = require('./models/event');
 const express = require('express');
 const mongoose = require('mongoose');
 const Moralis = require('moralis/node');
+const cors = require("cors");
+const Web3 = require('web3');
 
+const {tokenAbi, marketplaceAbi} = require('./abi');
+
+const web3 = new Web3(
+    new Web3.providers.HttpProvider(process.env.NODE_URL)
+  );
+
+const marketplaceContract = new web3.eth.Contract(marketplaceAbi, process.env.MARKETPLACE_ADDRESS);
+const tokenContract = new web3.eth.Contract(tokenAbi, process.env.TOKEN_ADDRESS);
 const mongoString = process.env.DATABASE_URL;
 
 const serverUrl = process.env.MORALIS_SERVER_URL;
@@ -27,6 +37,8 @@ database.once('connected', () => {
 })
 const app = express();
 
+app.use(cors());
+
 app.use(express.json());
 
 app.listen(6969, () => {
@@ -35,8 +47,20 @@ app.listen(6969, () => {
 
 app.get('/api/getEvents', async (req, res)=>{
     try {
-        const events = await Event.find().lean();
-        res.send({"events": events});
+        if(!req.query.url){
+            const events = await Event.find().lean();
+        const finalEvents = [];
+
+        await Promise.all(events.map(async (event)=>{
+            const available = await tokenContract.methods.balanceOf(process.env.MARKETPLACE_ADDRESS, event.tokenId).call()
+            finalEvents.push( {available: available, ...event})
+        }))
+        res.send({"events": finalEvents});
+        } else {
+            const event = await Event.findOne({url: req.query.url}).lean();
+            res.send(event);
+        }
+        
     } catch {
         res.status(400);
         res.send({status: "error"});

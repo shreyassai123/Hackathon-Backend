@@ -26,6 +26,7 @@ const EventSchema = new mongoose.Schema(
     metadata: { type: Object, required: true },
     totalSupply: { type: Number, required: true },
     price: { type: String, required: true },
+    tokenId: { type: Number, required: true}
   },
   { collection: "events" }
 );
@@ -43,6 +44,7 @@ async function checkItem(val) {
             const totalSupply = await tokenContract.methods.totalSupply(tokenId).call();
             this.totalSupply = totalSupply;
             this.price = item.price;
+            this.tokenId = item.tokenId;
         }
         } else {
             return false
