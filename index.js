@@ -79,6 +79,33 @@ app.post('/api/addEvent', async (req, res)=>{
     }
 })
 
+
+app.post('/api/checkInUser', async (req, res)=>{
+    try {
+        const signature = req.body.signature;
+        const code = req.body.code;
+
+        var hash = Web3.utils.sha3(code);
+        var signing_address = await web3.eth.accounts.recover(hash, signature);
+
+        console.log(signing_address)
+
+        const event = await Event.findById(code);
+
+        const balance = await tokenContract.methods.balanceOf(signing_address, event.item).call();
+        if(balance > 0){
+            res.send({status: "ok"});
+        } else {
+            res.status(400);
+            res.send({status: "error"})
+        }
+
+    } catch {
+        res.status(400);
+        res.send({status: "error"});
+    }
+})
+
 app.get("/api/getNFTs", async (req, res) => {
     try {
       const options = {
