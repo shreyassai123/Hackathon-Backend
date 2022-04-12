@@ -5,6 +5,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const Moralis = require('moralis/node');
 const cors = require("cors");
+const fetch = require("node-fetch");
 const Web3 = require('web3');
 
 const {tokenAbi, marketplaceAbi} = require('./abi');
@@ -88,8 +89,6 @@ app.post('/api/checkInUser', async (req, res)=>{
         var hash = Web3.utils.sha3(code);
         var signing_address = await web3.eth.accounts.recover(hash, signature);
 
-        console.log(signing_address)
-
         const event = await Event.findById(code);
 
         const balance = await tokenContract.methods.balanceOf(signing_address, event.item).call();
@@ -109,7 +108,7 @@ app.post('/api/checkInUser', async (req, res)=>{
 app.get("/api/getNFTs", async (req, res) => {
     try {
       const options = {
-        chain: "matic",
+        chain: "0x13881",
         address: req.query.account,
         token_address: process.env.TOKEN_ADDRESS,
       };
