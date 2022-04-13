@@ -6,7 +6,7 @@ const LogSchema = new mongoose.Schema(
   {
     account: {type: String, required: true},
     timestamp: {type: Date, required: true},
-    event: {type: ObjectId, required: true}
+    eventId: {type: ObjectId, required: true}
   },
   { collection: "log" }
 );

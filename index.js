@@ -96,7 +96,7 @@ app.post('/api/checkInUser', async (req, res)=>{
         if(balance > 0){
             const log = {
                 account: signing_address,
-                event: event._id,
+                eventId: event._id,
                 timestamp: new Date(Date.now())
             }
 
@@ -115,8 +115,14 @@ app.post('/api/checkInUser', async (req, res)=>{
 
 app.get('/api/getLogs', async (req, res)=>{
     try {
-        const logs = await Log.find({account: req.query.account});
-        res.send({"logs": logs});
+        const logs = await Log.find({account: req.query.account}).lean();
+
+        const finalLogs =[];
+         await Promise.all(logs.map(async (log)=>{
+            const event = await Event.findById(log.eventId).lean()
+            return finalLogs.push({...log, event: event});
+        }))
+        res.send({"logs": finalLogs});
 
     } catch {
         res.status(400);
