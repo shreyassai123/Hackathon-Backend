@@ -1,5 +1,6 @@
 require('dotenv').config();
 const Event = require('./models/event');
+const Log = require('./models/log');
 
 const express = require('express');
 const mongoose = require('mongoose');
@@ -93,11 +94,29 @@ app.post('/api/checkInUser', async (req, res)=>{
 
         const balance = await tokenContract.methods.balanceOf(signing_address, event.tokenId).call();
         if(balance > 0){
+            const log = {
+                account: signing_address,
+                event: event._id,
+                timestamp: new Date(Date.now())
+            }
+
+            await Log.insertMany([log])
             res.send({status: "ok"});
         } else {
             res.status(400);
             res.send({status: "error"})
         }
+
+    } catch {
+        res.status(400);
+        res.send({status: "error"});
+    }
+})
+
+app.get('/api/getLogs', async (req, res)=>{
+    try {
+        const logs = await Log.find({account: req.query.account});
+        res.send({"logs": logs});
 
     } catch {
         res.status(400);
