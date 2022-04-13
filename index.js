@@ -91,7 +91,7 @@ app.post('/api/checkInUser', async (req, res)=>{
 
         const event = await Event.findById(code);
 
-        const balance = await tokenContract.methods.balanceOf(signing_address, event.item).call();
+        const balance = await tokenContract.methods.balanceOf(signing_address, event.tokenId).call();
         if(balance > 0){
             res.send({status: "ok"});
         } else {
