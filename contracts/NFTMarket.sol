@@ -25,16 +25,20 @@ contract NFTMarket is ReentrancyGuard, AccessControl, ERC1155Holder {
         _pay = owner;
     }
 
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC1155Receiver, AccessControl) returns (bool) {
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(ERC1155Receiver, AccessControl)
+        returns (bool)
+    {
         return super.supportsInterface(interfaceId);
     }
 
-    
-
     struct MarketItem {
-        uint itemId;
+        uint256 itemId;
         address nftContract;
-        uint256 tokenId; 
+        uint256 tokenId;
         address payable seller;
         uint256 price;
         uint256 releaseTime;
@@ -42,33 +46,19 @@ contract NFTMarket is ReentrancyGuard, AccessControl, ERC1155Holder {
         bool cancelled;
     }
 
-    event MarketItemCreated (
-      uint indexed itemId,
-      uint256 timestamp
-    );
-    
-    event MarketItemCancelled (
-        uint indexed itemId,
-        uint256 timestamp
-    );
+    event MarketItemCreated(uint256 indexed itemId, uint256 timestamp);
 
-    event MarketItemLocked (
-        uint indexed itemId,
-        uint256 timestamp
-    );
+    event MarketItemCancelled(uint256 indexed itemId, uint256 timestamp);
 
-    event MarketItemUnlocked (
-        uint indexed itemId,
-        uint256 timestamp
-    );
+    event MarketItemLocked(uint256 indexed itemId, uint256 timestamp);
 
-    event MarketItemSold (
-        uint indexed itemId,
+    event MarketItemUnlocked(uint256 indexed itemId, uint256 timestamp);
+
+    event MarketItemSold(
+        uint256 indexed itemId,
         uint256 timestamp,
         address buyer
     );
-
-
 
     mapping(uint256 => MarketItem) private idToMarketItem;
 
@@ -81,17 +71,27 @@ contract NFTMarket is ReentrancyGuard, AccessControl, ERC1155Holder {
         return _pay;
     }
 
-    
-
-    function createMarketItem(address nftContract, uint256 tokenId, uint256 amount, uint256 price, uint256 releaseTime) public payable  nonReentrant {
+    function createMarketItem(
+        address nftContract,
+        uint256 tokenId,
+        uint256 amount,
+        uint256 price,
+        uint256 releaseTime
+    ) public payable nonReentrant {
         require(hasRole(MINTER_ROLE, msg.sender), "Caller is not a minter");
         require(price > 0, "Price must be at least 1 wei");
 
         _itemIds.increment();
         uint256 itemId = _itemIds.current();
-        IERC1155(nftContract).safeTransferFrom(msg.sender, address(this), tokenId, amount, "");
+        IERC1155(nftContract).safeTransferFrom(
+            msg.sender,
+            address(this),
+            tokenId,
+            amount,
+            ""
+        );
 
-        idToMarketItem[itemId] =  MarketItem(
+        idToMarketItem[itemId] = MarketItem(
             itemId,
             nftContract,
             tokenId,
@@ -102,73 +102,73 @@ contract NFTMarket is ReentrancyGuard, AccessControl, ERC1155Holder {
             false
         );
 
-        emit MarketItemCreated(
-            itemId,
-            block.timestamp
-        );
-
+        emit MarketItemCreated(itemId, block.timestamp);
     }
 
-    function createMarketSale(
-        uint256 itemId,
-        uint256 amount
-        ) public payable nonReentrant {
-            require(idToMarketItem[itemId].price*amount == msg.value, "Enter valid amount");
-            require(idToMarketItem[itemId].locked!=true, "Item locked");
-            require(idToMarketItem[itemId].cancelled!=true, "Item cancelled");
-            IERC1155(idToMarketItem[itemId].nftContract).safeTransferFrom(address(this), msg.sender, idToMarketItem[itemId].tokenId, amount, "");
-            idToMarketItem[itemId].seller.transfer(msg.value);
-
-        emit MarketItemSold(
-            itemId,
-            block.timestamp,
-            msg.sender
+    function createMarketSale(uint256 itemId, uint256 amount)
+        public
+        payable
+        nonReentrant
+    {
+        require(
+            idToMarketItem[itemId].price * amount == msg.value,
+            "Enter valid amount"
         );
-        
+        require(idToMarketItem[itemId].locked != true, "Item locked");
+        require(idToMarketItem[itemId].cancelled != true, "Item cancelled");
+        IERC1155(idToMarketItem[itemId].nftContract).safeTransferFrom(
+            address(this),
+            msg.sender,
+            idToMarketItem[itemId].tokenId,
+            amount,
+            ""
+        );
+        idToMarketItem[itemId].seller.transfer(msg.value);
+
+        emit MarketItemSold(itemId, block.timestamp, msg.sender);
     }
 
-
-    function cancelItem(
-        uint256 itemId
-        ) public nonReentrant {
+    function cancelItem(uint256 itemId) public nonReentrant {
         require(hasRole(MINTER_ROLE, msg.sender), "Caller is not a minter");
-        require(idToMarketItem[itemId].cancelled != true, "Item is already cancelled");
-        uint256 balance = IERC1155(idToMarketItem[itemId].nftContract).balanceOf(address(this), idToMarketItem[itemId].tokenId);
-        IERC1155(idToMarketItem[itemId].nftContract).safeTransferFrom(address(this), idToMarketItem[itemId].seller, idToMarketItem[itemId].tokenId, balance, "");
+        require(
+            idToMarketItem[itemId].cancelled != true,
+            "Item is already cancelled"
+        );
+        uint256 balance = IERC1155(idToMarketItem[itemId].nftContract)
+            .balanceOf(address(this), idToMarketItem[itemId].tokenId);
+        IERC1155(idToMarketItem[itemId].nftContract).safeTransferFrom(
+            address(this),
+            idToMarketItem[itemId].seller,
+            idToMarketItem[itemId].tokenId,
+            balance,
+            ""
+        );
         idToMarketItem[itemId].cancelled = true;
-        emit MarketItemCancelled(
-            itemId,
-            block.timestamp
-        );
+        emit MarketItemCancelled(itemId, block.timestamp);
     }
 
-    function lockItem(
-        uint256 itemId
-        ) public nonReentrant {
+    function lockItem(uint256 itemId) public nonReentrant {
         require(hasRole(MINTER_ROLE, msg.sender), "Caller is not a minter");
-        require(idToMarketItem[itemId].locked != true, "Item is already locked");
+        require(
+            idToMarketItem[itemId].locked != true,
+            "Item is already locked"
+        );
         idToMarketItem[itemId].locked = true;
-        emit MarketItemLocked(
-            itemId,
-            block.timestamp
-        );
+        emit MarketItemLocked(itemId, block.timestamp);
     }
 
-    function unLockItem(
-        uint256 itemId
-        ) public nonReentrant {
+    function unLockItem(uint256 itemId) public nonReentrant {
         require(hasRole(MINTER_ROLE, msg.sender), "Caller is not a minter");
-        require(idToMarketItem[itemId].locked != false, "Item is already unlocked");
+        require(
+            idToMarketItem[itemId].locked != false,
+            "Item is already unlocked"
+        );
         idToMarketItem[itemId].locked = false;
 
-        emit MarketItemUnlocked(
-            itemId,
-            block.timestamp
-        );
+        emit MarketItemUnlocked(itemId, block.timestamp);
     }
 
-    function getItem(uint itemId) public view returns (MarketItem memory){
+    function getItem(uint256 itemId) public view returns (MarketItem memory) {
         return idToMarketItem[itemId];
     }
-    
 }
