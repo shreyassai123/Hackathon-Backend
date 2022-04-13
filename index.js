@@ -96,7 +96,7 @@ app.post('/api/checkInUser', async (req, res)=>{
         const balance = await tokenContract.methods.balanceOf(signing_address, event.tokenId).call();
         if(balance > 0){
             const log = {
-                account: signing_address,
+                account: signing_address.toLowerCase(),
                 eventId: event._id,
                 timestamp: new Date(Date.now())
             }
