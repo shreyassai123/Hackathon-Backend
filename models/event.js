@@ -2,6 +2,9 @@ const mongoose = require("mongoose");
 const Web3 = require('web3');
 const fetch = require("node-fetch");
 const {tokenAbi, marketplaceAbi} = require('../abi');
+const IPFSGatewayTools = require("@pinata/ipfs-gateway-tools/dist/node");
+
+const gatewayTools = new IPFSGatewayTools();
 
 const web3 = new Web3(
     new Web3.providers.HttpProvider(process.env.NODE_URL)
@@ -39,7 +42,15 @@ async function checkItem(val) {
         if(val == item.itemId){
             const tokenId = item.tokenId;
             const nft = await tokenContract.methods.uri(tokenId).call();
-            const response = await fetch(nft);
+
+            const convertedGatewayUrl = gatewayTools.convertToDesiredGateway(
+              nft,
+              "https://crustipfs.xyz"
+            );
+
+
+
+            const response = await fetch(convertedGatewayUrl);
             const metadata = await response.json();
             this.metadata = metadata;
             const totalSupply = await tokenContract.methods.totalSupply(tokenId).call();

@@ -8,6 +8,7 @@ const Moralis = require('moralis/node');
 const cors = require("cors");
 const fetch = require("node-fetch");
 const Web3 = require('web3');
+const IPFSGatewayTools = require("@pinata/ipfs-gateway-tools/dist/node");
 
 const {tokenAbi, marketplaceAbi} = require('./abi');
 
